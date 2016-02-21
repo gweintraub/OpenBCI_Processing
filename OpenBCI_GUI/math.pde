@@ -1,4 +1,3 @@
-
 //compute the standard deviation
 float std(float[] data) {
   //calc mean
@@ -162,5 +161,4 @@ class RunningMean {
   public float calcMean() {
     return mean(values);
   }
-};
-
+}
