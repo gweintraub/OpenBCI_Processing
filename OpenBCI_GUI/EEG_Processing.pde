@@ -3,21 +3,53 @@
 boolean drawUser = false; //if true... toggles on EEG_Processing_User.draw and toggles off the headplot in Gui_Manager
 
 class EEG_Processing_User {
-  float x = width/2;
-  float y = height/2;
-  float moveRight = 0;
-  float moveUp = 0;
-  float moveDown = 0;
-  float moveLeft = 0;
+  // float x = width/2;
+  // float y = height/2;
+  float xA = width * (1/3);
+  float yA = height / 2;
+  float xB = width * (2 / 3);
+  float yB = height / 2;
+
+  boolean winner = false;
+  float time = 0;
+
+  float moveRightA = 0;
+  float moveUpA = 0;
+  float moveDownA = 0;
+  float moveLeftA = 0;
+  float moveRightB = 0;
+  float moveUpB = 0;
+  float moveDownB = 0;
+  float moveLeftB = 0;
 
   float channel1 = 0;
   float channel2 = 0;
   float channel3 = 0;
   float channel4 = 0;
+  float channel5 = 0;
+  float channel6 = 0;
+  float channel7 = 0;
+  float channel8 = 0;
+
+  boolean displayWinner1 = false;
+  boolean displayWinner2 = false;
+
+//assets
+  PImage robBig = loadImage("data/robBig.png")
+  PImage gobBig = loadImage("data/gobBig.png")
+  PImage robF = loadImage("data/robF.png");
+  PImage robB = loadImage("data/robB.png");
+  PImage robR = loadImage("data/robR.png");
+  PImage robL = loadImage("data/robL.png");
+  PImage gobF = loadImage("data/gobF.png");
+  PImage gobB = loadImage("data/gobB.png");
+  PImage gobR = loadImage("data/gobR.png");
+  PImage gobL = loadImage("data/gobL.png");
+  PImage robWin = loadImage("data/robWin.png");
+  PImage gobWin = loadImage("data/gobWin.png");
 
   //float[] channels = {0,0,0,0};
-
-  int circleDiameter = 50;
+  int circleDiameter = 100;
 
   private float fs_Hz;  //sample rate
   private int nchan;  
@@ -32,16 +64,20 @@ class EEG_Processing_User {
   //EMG channels
   int ourChan = 0;  //channel being monitored ... "3 - 1" means channel 3 (with a 0 index)
   //float myAverage = 0.0;   //this will change over time ... used for calculations below
-  float[] myAverage = {0,0,0,0};
+  float[] myAverage = {0,0,0,0,0,0,0,0};
+  //float[] myAverageB = {0,0,0,0}
   float acceptableLimitUV = 255;  //uV values above this limit are excluded, as a result of them almost certainly being noise...
   
   //if writing to a serial port
-  int[] output = {0,0,0,0};
+  int[] output = {0,0,0,0,0,0,0,0};
+  //int[] outputB = {0,0,0,0};
   //int output = 0; //value between 0-255 that is the relative position of the current uV average between the rolling lower and upper uV thresholds
   //float output_normalized = 0;  //converted to between 0-1
   //float output_adjusted = 0;  //adjusted depending on range that is expected on the other end, ie 0-255?
-  float[] output_normalized = {0,0,0,0};
-  float[] output_adjusted = {0,0,0,0};
+  float[] output_normalized = {0,0,0,0,0,0,0,0};
+  //float[] output_normalizedB = {0,0,0,0};
+  float[] output_adjusted = {0,0,0,0,0,0,0,0};
+  //float[] output_adjustedB = {0,0,0,0};
  
   //class constructor
   EEG_Processing_User(int NCHAN, float sample_rate_Hz) {
@@ -99,7 +135,7 @@ class EEG_Processing_User {
             if(output[x] > 255) output[x] = 255;
             
             //attempt to write to serial_output. If this serial port does not exist, do nothing.
-            if (x == 3) {
+            if (x == 7) {
               //println(x);
             try {
               //println("inMoov_output: | " + output + " |");
@@ -142,6 +178,271 @@ class EEG_Processing_User {
 
   //Draw function added to render EMG feedback visualizer
   public void draw(){
+    //Keeps the circle from going past the edges of the canvas
+    //Sets starting positions
+    if (xA > width - circleDiameter / 2) {
+      xA = width - circleDiameter / 2;
+    }
+    if (yA > height - circleDiameter / 2) {
+      yA = height - circleDiameter / 2;
+    }
+    if (xA < 0 + circleDiameter / 2) {
+      xA = 0 + circleDiameter / 2;
+    };
+    if (yA < 0 + circleDiameter / 2) {
+      y = 0 + circleDiameter / 2;
+    };
+    if (xB > width - circleDiameter / 2) {
+      xB = width - circleDiameter / 2;
+    }
+    if (yB > height - circleDiameter / 2) {
+      yB = height - circleDiameter / 2;
+    }
+    if (xB < 0 + circleDiameter / 2) {
+      xB = 0 + circleDiameter / 2;
+    }
+    if (yB < 0 + circleDiameter / 2) {
+      yB = 0 + circleDiameter / 2;
+    }
+
+    float distance = dist(xA, yA, xB, yB) // test distance between players
+    //  If players are touching, stronger player determines direction.
+
+    moveUpA = map(channel1, 0, 255, 0, 10);
+    moveDownA = map(channel2, 0, 255, 0, 10);
+    moveLeftA = map(channel3, 0, 255, 0, 10);
+    moveRightA = map(channel4, 0, 255, 0, 10);
+    moveUpB = map(channel5, 0, 255, 0, 10);
+    moveDownB = map(channel6, 0, 255, 0, 10);
+    moveLeftB = map(channel7, 0, 255, 0, 10);
+    moveRightB = map(channel8, 0, 255, 0, 10);
+
+    xA += moveRightA;
+    yA += moveUpA;
+    yA += moveDownA;
+    xA += moveLeftA;
+    xB += moveRightB;
+    yB += moveUpB;
+    yB += moveDownB;
+    xB += moveLeftB;
+
+    println(xA + "," + xB + "," + yA + "," + yB);
+
+
+
+
+    background(0);
+    stroke(0, 0, 255);
+    noFill();
+    strokeWeight(10);
+    ellipse(width / 2, height / 2, height - 130, height - 130);
+    noStroke();
+    fill(0, 0, 255);
+    image(robBig, width - 130, 130);
+    image(gobBig, 130, 130);
+
+
+      channel1 = output[0];
+      channel2 = output[1];
+      channel3 = output[2];
+      channel4 = output[3];
+      channel5 = output[4];
+      channel6 = output[5];
+      channel7 = output[6];
+      channel8 = output[7];
+
+      moveUpA = map(channel1, 0, 255, 0, 10);
+      moveDownA = map(channel2, 0, 255, 0, 10);
+      moveLeftA = map(channel3, 0, 255, 0, 10);
+      moveRightA = map(channel4, 0, 255, 0, 10);
+
+
+      x += moveRight;
+      y += moveUp;
+      y -= moveDown;
+      x -= moveLeft;
+
+      boolean leftA = false;
+      boolean leftB = false;
+      boolean rightA = false;
+      boolean rightB = false;
+      boolean upA = false;
+      boolean upB = false;
+      boolean downA = false;
+      boolean downB = false;
+
+      noStroke();
+      fill(255, 0, 0);
+      ellipse(x, y, circleDiameter, circleDiameter);
+
+      //Keeps the circle from going past the edges of the canvas
+
+      if (x > width - circleDiameter / 2) {
+        x = width - circleDiameter / 2;
+      }
+      if (y > height - circleDiameter / 2) {
+        y = height - circleDiameter / 2;
+      }
+      if (x < 0 + circleDiameter / 2) {
+        x = 0 + circleDiameter / 2;
+      }
+      if (y < 0 + circleDiameter / 2) {
+        y = 0 + circleDiameter / 2;
+      }
+    
+
+    //MOVE CHARACTERS BASED ON MAPPED SIGNALS
+
+    if (moveUpA > 0) {
+      yA += 5;
+      upA = true;
+    } else {
+      upA = false;
+    }
+    if (moveUpB > 0) {
+      yB += 5;
+      upB = true;
+    } else {
+      upB = false;
+    }
+    if (moveDownA > 0) {
+      yA -= 5;
+      downA = true;
+    } else {
+      downA = false;
+    }
+    if (moveDownB > 0) {
+      yB -= 5;
+      downB = true;
+    } downB = false;
+    if (moveRightA > 0) {
+      xA += 5;
+      rightA = true;
+    } else {
+      rightA = false;
+    }
+    if (moveRightB > 0) {
+      xB += 5;
+      rightB = true;
+    } else {
+      rightB = false;
+    }
+    if (moveLeftA > 0) {
+      xA -= 5;
+      leftA = true;
+    } else {
+      leftA = false;
+    }
+    if (moveLeftB > 0) {
+      xB -= 5;
+      leftB = true;
+    } else {
+      leftB = false;
+    }
+
+//If players are touching, check strength to change movement
+  if (distance < circleDiameter) {
+    if (moveLeftA > moveLeftB) {
+      xA -= 5;
+      xB -= 10;
+    }
+    if (moveRightA > moveRightB) {
+      xA += 5;
+      xB += 10;
+    }
+    if (moveUpA > moveUpB) {
+      yA -= 5;
+      yB -= 10;
+    }
+    if (moveDownA > moveDownB) {
+     yA += 5;
+      yB += 10;
+    }
+    if (moveLeftB > moveLeftA) {
+      xB -= 5;
+      xA -= 10;
+    }
+    if (moveRightB > moveRightA) {
+      xB += 5;
+      xA += 10;
+    }
+    if (moveUpB > moveUpA) {
+      yB -= 5;
+      yA -= 10;
+    }
+    if (moveDownB > moveDownA) {
+      yB += 5;
+      yA += 10;
+    }
+  }
+
+//SPRITES
+  //Displays Rob the Robot Player sprites when keys are pressed
+    if (leftB) {
+      image(robL, xB, yB);
+    } else if (rightB) {
+      image(robR, xB, yB);
+    } else if (upB) {
+      image(robB, xB, yB);
+    } else if (downB) {
+      image(robF, xB, yB);
+    } else {
+      image(robF, xB, yB);
+    }
+
+    if (leftA) {
+      image(gobL, xA, yA);
+    } else if (rightA) {
+      image(gobR, xA, yA);
+    } else if (upA) {
+      image(gobB, xA, yA);
+    } else if (downA) {
+      image(gobF, xA, yA);
+    } else image(gobF, xA, yA);
+  
+
+
+
+    //WIN STATE
+
+    float outsideA = dist(xA, yA, width / 2, height / 2); // test of player A out of bounds
+    float outsideB = dist(xB, yB, width / 2, height / 2); // test of player B out of bounds
+
+
+    if (outsideA >= height / 2 - 60 && winner == false) {
+      displayWinner1 = true;
+      displayWinner2 = false;
+      winner = true;
+     
+      // setTimeout(function() {
+      //   displayWinner1 = false;
+      //   winner = false;
+      //    xA = width * (1 / 3);
+      // yA = height / 2;
+      // xB = width * (2 / 3);
+      // yB = height / 2;
+      // }, 5000)
+
+    }
+    if (outsideB >= height / 2 - 60 && winner == false) {
+      displayWinner2 = true;
+      displayWinner1 = false;
+      winner = true;
+    
+      // setTimeout(function() {
+      //   displayWinner2 = false;
+      //   winner = false;
+      //     xA = width * (1 / 3);
+      // yA = height / 2;
+      // xB = width * (2 / 3);
+      // yB = height / 2;
+      // }, 5000)
+    }
+    if (displayWinner2) image(gobWin, width / 2, height / 2);
+    if (displayWinner1) image(robWin, width / 2, height / 2);
+
+//END WIN STATE
+
     for (int i = 0; i < 4; ++i) {
       //DRAWING CIRCLES FOR CHANNEL X//
           pushStyle();
@@ -175,45 +476,6 @@ class EEG_Processing_User {
 
           popStyle();
       //STOP DRAWING THEM CIRCLES//
-    }
-
-    background(255, 255, 255);
-
-      //Test the code with random values
-
-      channel1 = output[0];
-      channel2 = output[1];
-      channel3 = output[2];
-      channel4 = output[3];
-
-      moveUp = map(channel1, 0, 255, 0, 10);
-      moveDown = map(channel2, 0, 255, 0, 10);
-      moveLeft = map(channel3, 0, 255, 0, 10);
-      moveRight = map(channel4, 0, 255, 0, 10);
-
-      x += moveRight;
-      y += moveUp;
-      y -= moveDown;
-      x -= moveLeft;
-
-      noStroke();
-      fill(255, 0, 0);
-      ellipse(x, y, circleDiameter, circleDiameter);
-
-      //Keeps the circle from going past the edges of the canvas
-
-      if (x > width - circleDiameter / 2) {
-        x = width - circleDiameter / 2;
-      }
-      if (y > height - circleDiameter / 2) {
-        y = height - circleDiameter / 2;
-      }
-      if (x < 0 + circleDiameter / 2) {
-        x = 0 + circleDiameter / 2;
-      }
-      if (y < 0 + circleDiameter / 2) {
-        y = 0 + circleDiameter / 2;
-      }
     }
 
 }
